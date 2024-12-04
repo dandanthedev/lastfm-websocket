@@ -1,12 +1,26 @@
 # Last.FM Now Playing WebSocket
 
+## ?
+
+This is a websocket server for [Last.FM](https://www.last.fm/) that allows you to recieve information about the user's now playing track and get live updates when they start playing a track.
+
+## Usage
+
+## Connecting
+
+Here's an example of connecting to the socket using JavaScript:
+
+```js
+const socket = new WebSocket("ws://localhost:3000");
+```
+
 ## Opcodes
 
 - -1 - Error
 - 0 - Message from the server (data or init)
 - 1 - Ping
-- 2 - Subscribe
-- 3 - Unsubscribe
+- 2 - Subscribe / Subscriptions / Data
+- 3 - Unsubscribe / Subscriptions
 
 ## Sending data
 
@@ -44,7 +58,7 @@ The socket will send a message like this when a user starts playing a track:
 
 ```json
 {
-  "op": 3,
+  "op": 2,
   "d": {
     "user": "sampleuser",
     "track": {
@@ -80,9 +94,21 @@ The socket will send a message like this when a user starts playing a track:
 }
 ```
 
+### Subscriptions
+
+This will be sent when (un)subscribing to a user:
+
+````json
+{
+  "op": 2, //2 when subscribing, 3 when unsubscribing
+  "d": {
+    "subscriptions": ["sampleuser", "anotheruser"]
+  }
+}
+
 ### Errors
 
-Fatal errors (that will close the websocket) will be sent like this:
+Fatal errors (that close the websocket) will be sent like this:
 
 ```json
 {
@@ -91,16 +117,18 @@ Fatal errors (that will close the websocket) will be sent like this:
     "error": "Something really bad happened"
   }
 }
-```
+````
 
 Issues relating to retrieval of data (like a user not having any recent tracks) will be sent like this:
 
 ```json
 {
-  "op": 3,
+  "op": 2,
   "d": {
     "user": "sampleuser",
     "error": "User has no recent tracks"
   }
 }
 ```
+
+These messages will not close the websocket.

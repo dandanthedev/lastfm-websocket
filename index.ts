@@ -126,7 +126,7 @@ Bun.serve({
           if (track.error) {
             ws.send(
               JSON.stringify({
-                op: 3,
+                op: 2,
                 d: {
                   user: json.d.user,
                   error: track.error,
@@ -139,7 +139,7 @@ Bun.serve({
             );
             ws.send(
               JSON.stringify({
-                op: 2,
+                op: 3,
                 d: {
                   subscriptions: socketData.subscriptions,
                 },
@@ -151,7 +151,7 @@ Bun.serve({
           } else {
             ws.send(
               JSON.stringify({
-                op: 3,
+                op: 2,
                 d: {
                   user: json.d.user,
                   track,
