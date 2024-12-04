@@ -98,13 +98,14 @@ The socket will send a message like this when a user starts playing a track:
 
 This will be sent when (un)subscribing to a user:
 
-````json
+````jsonc
 {
   "op": 2, //2 when subscribing, 3 when unsubscribing
   "d": {
     "subscriptions": ["sampleuser", "anotheruser"]
   }
 }
+```
 
 ### Errors
 
