@@ -125,7 +125,7 @@ The socket will send a message like this when a user starts playing a track:
 
 This will be sent when (un)subscribing to a user:
 
-````jsonc
+```jsonc
 {
   "op": 2, //2 when subscribing, 3 when unsubscribing
   "d": {
@@ -145,7 +145,7 @@ Fatal errors (that close the websocket) will be sent like this:
     "error": "Something really bad happened"
   }
 }
-````
+```
 
 Issues relating to retrieval of data (like a user not having any recent tracks) will be sent like this:
 
