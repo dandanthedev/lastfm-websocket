@@ -6,12 +6,39 @@ This is a websocket server for [Last.FM](https://www.last.fm/) that allows you t
 
 ## Usage
 
-## Connecting
-
-Here's an example of connecting to the socket using JavaScript:
+Here's an example of the usage of the socket using JavaScript:
 
 ```js
 const socket = new WebSocket("ws://localhost:3000");
+
+socket.onopen = () => {
+  console.log("Connected");
+};
+
+socket.onmessage = (event) => {
+  const data = JSON.parse(event.data);
+  const opcode = data.op;
+  const data = data.d;
+
+  if (opcode === 0) {
+    if (data.pingInterval) {
+      setInterval(() => {
+        socket.send(JSON.stringify({ op: 1 }));
+      }, data.pingInterval);
+
+      socket.send(JSON.stringify({ op: 2, d: { user: "sampleuser" } }));
+    }
+  }
+
+  if (opcode === 2) {
+    if (data.error) return console.error(data.error);
+    if (data.track) {
+      console.log(
+        `${data.user} is now playing ${data.track.name} by ${data.track.artist.name}`
+      );
+    }
+  }
+};
 ```
 
 ## Opcodes
