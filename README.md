@@ -16,27 +16,31 @@ socket.onopen = () => {
 };
 
 socket.onmessage = (event) => {
-  const data = JSON.parse(event.data);
-  const opcode = data.op;
+  const data = JSON.parse(event.data); //This is the actual data. Read "Recieving data" for more info.
+  const opcode = data.op; //See "Opcodes" for more info.
   const data = data.d;
 
+  //Init
   if (opcode === 0) {
-    if (data.pingInterval) {
-      setInterval(() => {
-        socket.send(JSON.stringify({ op: 1 }));
-      }, data.pingInterval);
+    setInterval(() => {
+      socket.send(JSON.stringify({ op: 1 })); //send a ping every "pingInterval" ms
+    }, data.pingInterval);
 
-      socket.send(JSON.stringify({ op: 2, d: { user: "sampleuser" } }));
-    }
+    //Subscribe to a user
+    socket.send(JSON.stringify({ op: 2, d: { user: "sampleuser" } }));
+    //Subscribe to another user
+    socket.send(JSON.stringify({ op: 2, d: { user: "anotheruser" } }));
   }
 
+  //On data
   if (opcode === 2) {
+    //Handle errors
     if (data.error) return console.error(data.error);
-    if (data.track) {
-      console.log(
-        `${data.user} is now playing ${data.track.name} by ${data.track.artist.name}`
-      );
-    }
+
+    //Use the data 🎉
+    console.log(
+      `${data.user} is now playing ${data.track.name} by ${data.track.artist.name}`
+    );
   }
 };
 ```
@@ -44,7 +48,7 @@ socket.onmessage = (event) => {
 ## Opcodes
 
 - -1 - Error
-- 0 - Message from the server (data or init)
+- 0 - Init data
 - 1 - Ping
 - 2 - Subscribe / Subscriptions / Data
 - 3 - Unsubscribe / Subscriptions
