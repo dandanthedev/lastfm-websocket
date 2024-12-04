@@ -1,0 +1,16 @@
+<script async>
+  const websocket = new WebSocket("http://localhost:3000");
+  websocket.addEventListener("message", (event) => {
+    const data = JSON.parse(event.data);
+    if (data.op === 0) {
+      console.log("Ping interval: ", data.d.pingInterval);
+
+      setInterval(() => {
+        websocket.send(JSON.stringify({ op: 1 }));
+      }, data.d.pingInterval);
+    }
+  });
+  websocket.addEventListener("open", () => {
+    websocket.send(JSON.stringify({ op: 2, d: { user: "dannydandan_" } }));
+  });
+</script>
