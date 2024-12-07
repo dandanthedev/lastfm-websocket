@@ -9,16 +9,16 @@ This is a websocket server for [Last.FM](https://www.last.fm/) that allows you t
 Here's an example of the usage of the socket using JavaScript:
 
 ```js
-const socket = new WebSocket("ws://localhost:3000");
+const socket = new WebSocket("wss://lastfm.dandandev.xyz"); //this server is public btw :D
 
 socket.onopen = () => {
   console.log("Connected");
 };
 
 socket.onmessage = (event) => {
-  const data = JSON.parse(event.data); //This is the actual data. Read "Recieving data" for more info.
-  const opcode = data.op; //See "Opcodes" for more info.
-  const data = data.d;
+  const parsed = JSON.parse(event.data); //This is the actual data. Read "Recieving data" for more info.
+  const opcode = parsed.op; //See "Opcodes" for more info.
+  const data = parsed.d;
 
   //Init
   if (opcode === 0) {
