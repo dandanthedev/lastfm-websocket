@@ -36,14 +36,43 @@ function close(ws: ServerWebSocket<unknown>, reason: string) {
 }
 
 Bun.serve({
-  fetch(req, server) {
-    server.upgrade(req, {
-      data: {
-        id: createId(),
-        subscriptions: [],
-      },
-    });
-    return undefined;
+  async fetch(req, server) {
+    const user = req.url.split("/")[3].trim();
+    console.log(user);
+    if (user) {
+      let curVal = currentValue.get(user);
+      if (!curVal)
+        curVal = await fetchDataForUser({
+          id: user,
+          subscriptions: [],
+        });
+      let responseJSON;
+      if (curVal.error)
+        responseJSON = JSON.stringify({
+          error: curVal.error,
+        });
+      else
+        responseJSON = JSON.stringify({
+          track: curVal,
+        });
+
+      return new Response(responseJSON, {
+        headers: {
+          "content-type": "application/json",
+          "Access-Control-Allow-Origin": "*",
+        },
+      });
+    } else {
+      server.upgrade(req, {
+        data: {
+          id: createId(),
+          subscriptions: [],
+        },
+      });
+      return new Response("please connect via websocket or use /:user", {
+        status: 405,
+      });
+    }
   },
   websocket: {
     open(ws) {
@@ -200,10 +229,16 @@ Bun.serve({
     close(ws) {
       const socketData = transformSocketDataTS(ws.data);
       console.log("close", socketData.id);
-      activeSockets.delete(socketData.id);
     },
   },
 });
+
+function returnError(s: any, error: string) {
+  ee.emit(s.id, {
+    error,
+  });
+  return { error };
+}
 
 async function fetchDataForUser(s: any) {
   const searchParams = new URLSearchParams();
@@ -212,18 +247,17 @@ async function fetchDataForUser(s: any) {
   searchParams.set("api_key", "c1797de6bf0b7e401b623118120cd9e1");
   searchParams.set("limit", "1");
   searchParams.set("format", "json");
-  fetch(`https://ws.audioscrobbler.com/2.0/?${searchParams.toString()}`)
+  const res = await fetch(
+    `https://ws.audioscrobbler.com/2.0/?${searchParams.toString()}`
+  )
     .then((res) => res.json())
     .then((data) => {
-      console.log(data.recenttracks.track[0]);
       if (data.error) {
         shouldFetch.splice(shouldFetch.indexOf(s), 1); //todo: is this a good idea?
-        return ee.emit(s.id, {
-          error: data.message,
-        });
+        return returnError(s, data.message);
       }
       const track = data.recenttracks.track[0];
-      if (!track) return ee.emit(s.id, { error: "User has no recent tracks" });
+      if (!track) return returnError(s, "User has no recent tracks");
       const formattedTrack = {
         album: {
           mbid: track.album.mbid,
@@ -242,7 +276,7 @@ async function fetchDataForUser(s: any) {
         name: track.name,
         mbid: track.mbid,
         url: track.url,
-        nowplaying: track["@attr"].nowplaying,
+        nowplaying: track["@attr"]?.nowplaying || null,
       };
       if (
         JSON.stringify(formattedTrack) ===
@@ -251,7 +285,10 @@ async function fetchDataForUser(s: any) {
         return;
       currentValue.set(s.id, formattedTrack);
       ee.emit(s.id, formattedTrack);
+      return formattedTrack;
     });
+
+  return res;
 }
 
 setInterval(() => {
