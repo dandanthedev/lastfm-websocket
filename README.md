@@ -9,7 +9,7 @@ This is a websocket server for [Last.FM](https://www.last.fm/) that allows you t
 Here's an example of the usage of the socket using JavaScript:
 
 ```js
-const socket = new WebSocket("ws://localhost:3000");
+const socket = new WebSocket("wss://lastfm.dandandev.xyz"); //this server is public btw :D
 
 socket.onopen = () => {
   console.log("Connected");
