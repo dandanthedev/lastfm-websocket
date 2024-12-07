@@ -272,6 +272,6 @@ setInterval(() => {
   shouldFetch.forEach((s) => {
     fetchDataForUser(s);
   });
-}, 15000);
+}, 10000);
 
 console.log("up!");
