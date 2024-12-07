@@ -16,9 +16,9 @@ socket.onopen = () => {
 };
 
 socket.onmessage = (event) => {
-  const data = JSON.parse(event.data); //This is the actual data. Read "Recieving data" for more info.
-  const opcode = data.op; //See "Opcodes" for more info.
-  const data = data.d;
+  const parsed = JSON.parse(event.data); //This is the actual data. Read "Recieving data" for more info.
+  const opcode = parsed.op; //See "Opcodes" for more info.
+  const data = parsed.d;
 
   //Init
   if (opcode === 0) {
