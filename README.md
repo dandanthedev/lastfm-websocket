@@ -9,7 +9,7 @@ This is a websocket server for [Last.FM](https://www.last.fm/) that allows you t
 Here's an example of the usage of the socket using JavaScript:
 
 ```js
-const socket = new WebSocket("wss://lastfm.dandandev.xyz"); //this server is public btw :D
+const socket = new WebSocket("wss://lastfm.dandandev.xyz");
 
 socket.onopen = () => {
   console.log("Connected");
@@ -50,7 +50,7 @@ socket.onmessage = (event) => {
 - -1 - Error
 - 0 - Init data
 - 1 - Ping
-- 2 - Subscribe / Subscriptions / Data
+- 2 - Subscribe / Data
 - 3 - Unsubscribe / Subscriptions
 
 ## Sending data
@@ -125,19 +125,6 @@ The socket will send a message like this when a user starts playing a track:
 }
 ```
 
-### Subscriptions
-
-This will be sent when (un)subscribing to a user:
-
-```jsonc
-{
-  "op": 2, //2 when subscribing, 3 when unsubscribing
-  "d": {
-    "subscriptions": ["sampleuser", "anotheruser"]
-  }
-}
-```
-
 ### Errors
 
 Fatal errors (that close the websocket) will be sent like this:
@@ -164,3 +151,16 @@ Issues relating to retrieval of data (like a user not having any recent tracks) 
 ```
 
 These messages will not close the websocket.
+
+## REST
+
+We also offer a REST API for users wanting to prefetch data on the server.
+
+### Fetching data
+
+To fetch data, you can use the following endpoint:
+
+`https://lastfm.dandandev.xyz/:user`
+
+Where `:user` is the username of the user you want to fetch data for.
+This will return the same data as the websocket.
