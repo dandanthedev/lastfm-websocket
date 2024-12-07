@@ -113,14 +113,21 @@ Bun.serve({
             id: json.d.user,
             subscriptions: [socketData.id],
           });
-        ws.send(
-          JSON.stringify({
-            op: 2,
-            d: {
-              subscriptions: socketData.subscriptions,
-            },
-          })
-        );
+
+        if (currentValue.has(json.d.user)) {
+          ws.send(
+            JSON.stringify({
+              op: 2,
+              d: {
+                user: json.d.user,
+                track: currentValue.get(json.d.user),
+              },
+            })
+          );
+        } else {
+          const found = shouldFetch.find((s) => s.id === json.d.user);
+          if (found) fetchDataForUser(found);
+        }
 
         function sendInfo(track: any) {
           if (track.error) {
@@ -198,6 +205,55 @@ Bun.serve({
   },
 });
 
+async function fetchDataForUser(s: any) {
+  const searchParams = new URLSearchParams();
+  searchParams.set("method", "user.getrecenttracks");
+  searchParams.set("user", s.id);
+  searchParams.set("api_key", "c1797de6bf0b7e401b623118120cd9e1");
+  searchParams.set("limit", "1");
+  searchParams.set("format", "json");
+  fetch(`https://ws.audioscrobbler.com/2.0/?${searchParams.toString()}`)
+    .then((res) => res.json())
+    .then((data) => {
+      console.log(data.recenttracks.track[0]);
+      if (data.error) {
+        shouldFetch.splice(shouldFetch.indexOf(s), 1); //todo: is this a good idea?
+        return ee.emit(s.id, {
+          error: data.message,
+        });
+      }
+      const track = data.recenttracks.track[0];
+      if (!track) return ee.emit(s.id, { error: "User has no recent tracks" });
+      const formattedTrack = {
+        album: {
+          mbid: track.album.mbid,
+          name: track.album["#text"],
+        },
+        artist: {
+          mbid: track.artist.mbid,
+          name: track.artist["#text"],
+        },
+        images: track.image.map((i: any) => {
+          return {
+            size: i.size,
+            url: i["#text"],
+          };
+        }),
+        name: track.name,
+        mbid: track.mbid,
+        url: track.url,
+        nowplaying: track["@attr"].nowplaying,
+      };
+      if (
+        JSON.stringify(formattedTrack) ===
+        JSON.stringify(currentValue.get(s.id))
+      )
+        return;
+      currentValue.set(s.id, formattedTrack);
+      ee.emit(s.id, formattedTrack);
+    });
+}
+
 setInterval(() => {
   console.log(shouldFetch);
   shouldFetch.forEach((s) => {
@@ -214,53 +270,7 @@ setInterval(() => {
   });
 
   shouldFetch.forEach((s) => {
-    const searchParams = new URLSearchParams();
-    searchParams.set("method", "user.getrecenttracks");
-    searchParams.set("user", s.id);
-    searchParams.set("api_key", "c1797de6bf0b7e401b623118120cd9e1");
-    searchParams.set("limit", "1");
-    searchParams.set("format", "json");
-    fetch(`https://ws.audioscrobbler.com/2.0/?${searchParams.toString()}`)
-      .then((res) => res.json())
-      .then((data) => {
-        console.log(data.recenttracks.track[0]);
-        if (data.error) {
-          shouldFetch.splice(shouldFetch.indexOf(s), 1); //todo: is this a good idea?
-          return ee.emit(s.id, {
-            error: data.message,
-          });
-        }
-        const track = data.recenttracks.track[0];
-        if (!track)
-          return ee.emit(s.id, { error: "User has no recent tracks" });
-        const formattedTrack = {
-          album: {
-            mbid: track.album.mbid,
-            name: track.album["#text"],
-          },
-          artist: {
-            mbid: track.artist.mbid,
-            name: track.artist["#text"],
-          },
-          images: track.image.map((i: any) => {
-            return {
-              size: i.size,
-              url: i["#text"],
-            };
-          }),
-          name: track.name,
-          mbid: track.mbid,
-          url: track.url,
-          nowplaying: track["@attr"].nowplaying,
-        };
-        if (
-          JSON.stringify(formattedTrack) ===
-          JSON.stringify(currentValue.get(s.id))
-        )
-          return;
-        currentValue.set(s.id, formattedTrack);
-        ee.emit(s.id, formattedTrack);
-      });
+    fetchDataForUser(s);
   });
 }, 15000);
 
